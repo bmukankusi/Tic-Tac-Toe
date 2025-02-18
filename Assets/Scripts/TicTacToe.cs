@@ -1,17 +1,16 @@
 using UnityEngine;
 using UnityEngine.UI;
-//text mesh pro
-using TMPro;
+using System.Collections.Generic;
 
 public class TicTacToe : MonoBehaviour
 {
     public Button[] gridButtons;
     public Text displayText;
-    private string currentPlayer = "X";
-    private string[] board = new string[9];
-    private bool gameOver = false;
     public Button resetButton;
 
+    private string currentPlayer;
+    private string[] board;
+    private bool gameOver = false;
 
     void Start()
     {
@@ -28,83 +27,14 @@ public class TicTacToe : MonoBehaviour
         resetButton.onClick.AddListener(ResetBoard);
     }
 
-
-    public void OnGridClick(int index)
-    {
-        if (gameOver || !string.IsNullOrEmpty(board[index])) return;
-
-        board[index] = currentPlayer;
-        gridButtons[index].GetComponentInChildren<Text>().text = currentPlayer;
-        gridButtons[index].interactable = false; // Disable button after selection
-
-        if (CheckWinner())
-        {
-            displayText.text = $"{currentPlayer} Wins!";
-            gameOver = true;
-        }
-        else if (IsDraw())
-        {
-            displayText.text = "It's a Draw!";
-            gameOver = true;
-        }
-        else
-        {
-            currentPlayer = (currentPlayer == "X") ? "O" : "X";
-            displayText.text = $"Next Player: {currentPlayer}";
-        }
-    }
-
-    private bool CheckWinner()
-    {
-        int[,] winPatterns = {
-        {0, 1, 2}, {3, 4, 5}, {6, 7, 8}, // Rows
-        {0, 3, 6}, {1, 4, 7}, {2, 5, 8}, // Columns
-        {0, 4, 8}, {2, 4, 6}            // Diagonals
-    };
-
-        for (int i = 0; i < winPatterns.GetLength(0); i++)
-        {
-            int a = winPatterns[i, 0], b = winPatterns[i, 1], c = winPatterns[i, 2];
-            if (board[a] == currentPlayer && board[b] == currentPlayer && board[c] == currentPlayer)
-            {
-                HighlightWinningCells(a, b, c);
-                displayText.text = $"{currentPlayer} Wins!";
-                gameOver = true;
-                resetButton.gameObject.SetActive(true); // Show reset button
-                return true;
-            }
-        }
-        return false;
-    }
-
-
-    private bool IsDraw()
-    {
-        foreach (string cell in board)
-        {
-            if (string.IsNullOrEmpty(cell)) return false;
-        }
-        displayText.text = "It's a Draw!";
-        gameOver = true;
-        resetButton.gameObject.SetActive(true); // Show reset button
-        return true;
-    }
-
-
-    private void HighlightWinningCells(int a, int b, int c)
-    {
-        Color winColor = new Color(0.5f, 1f, 0.5f); // Light Green
-        gridButtons[a].GetComponent<Image>().color = winColor;
-        gridButtons[b].GetComponent<Image>().color = winColor;
-        gridButtons[c].GetComponent<Image>().color = winColor;
-    }
-
     public void ResetBoard()
     {
         gameOver = false;
-        currentPlayer = "X";
+        currentPlayer = "X"; // Player starts first
         displayText.text = "Next Player: X";
-        resetButton.gameObject.SetActive(false); // Hide reset button
+        resetButton.gameObject.SetActive(false);
+
+        board = new string[9];
 
         for (int i = 0; i < gridButtons.Length; i++)
         {
@@ -115,4 +45,178 @@ public class TicTacToe : MonoBehaviour
         }
     }
 
+    public void OnGridClick(int index)
+    {
+        if (gameOver || !string.IsNullOrEmpty(board[index])) return;
+
+        // Player move
+        board[index] = currentPlayer;
+        gridButtons[index].GetComponentInChildren<Text>().text = currentPlayer;
+        gridButtons[index].interactable = false;
+
+        if (CheckWinner()) return;
+        if (IsDraw()) return;
+
+        // Switch to AI Player (O)
+        currentPlayer = "O";
+        displayText.text = "AI is Thinking...";
+
+        // Delay AI move for better UX
+        Invoke("MakeAIMove", 1.0f);
+    }
+
+    private void MakeAIMove()
+    {
+        if (gameOver) return;
+
+        int bestMove = GetBestMove();
+        board[bestMove] = "O";
+        gridButtons[bestMove].GetComponentInChildren<Text>().text = "O";
+        gridButtons[bestMove].interactable = false;
+
+        if (CheckWinner()) return;
+        if (IsDraw()) return;
+
+        // Switch back to player (X)
+        currentPlayer = "X";
+        displayText.text = "Next Player: X";
+    }
+
+    private int GetBestMove()
+    {
+        int bestScore = int.MinValue;
+        int move = -1;
+
+        for (int i = 0; i < board.Length; i++)
+        {
+            if (string.IsNullOrEmpty(board[i]))
+            {
+                board[i] = "O";
+                int score = Minimax(board, 0, false);
+                board[i] = ""; // Undo move
+
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    move = i;
+                }
+            }
+        }
+
+        return move;
+    }
+
+    private int Minimax(string[] newBoard, int depth, bool isMaximizing)
+    {
+        string result = CheckWinState();
+        if (result == "O") return 10 - depth; // AI wins
+        if (result == "X") return depth - 10; // Player wins
+        if (result == "Draw") return 0; // Tie
+
+        if (isMaximizing)
+        {
+            int bestScore = int.MinValue;
+            for (int i = 0; i < newBoard.Length; i++)
+            {
+                if (string.IsNullOrEmpty(newBoard[i]))
+                {
+                    newBoard[i] = "O";
+                    int score = Minimax(newBoard, depth + 1, false);
+                    newBoard[i] = ""; // Undo move
+                    bestScore = Mathf.Max(score, bestScore);
+                }
+            }
+            return bestScore;
+        }
+        else
+        {
+            int bestScore = int.MaxValue;
+            for (int i = 0; i < newBoard.Length; i++)
+            {
+                if (string.IsNullOrEmpty(newBoard[i]))
+                {
+                    newBoard[i] = "X";
+                    int score = Minimax(newBoard, depth + 1, true);
+                    newBoard[i] = ""; // Undo move
+                    bestScore = Mathf.Min(score, bestScore);
+                }
+            }
+            return bestScore;
+        }
+    }
+
+    private string CheckWinState()
+    {
+        int[,] winPatterns = {
+            {0, 1, 2}, {3, 4, 5}, {6, 7, 8}, // Rows
+            {0, 3, 6}, {1, 4, 7}, {2, 5, 8}, // Columns
+            {0, 4, 8}, {2, 4, 6}            // Diagonals
+        };
+
+        for (int i = 0; i < winPatterns.GetLength(0); i++)
+        {
+            int a = winPatterns[i, 0], b = winPatterns[i, 1], c = winPatterns[i, 2];
+            if (!string.IsNullOrEmpty(board[a]) && board[a] == board[b] && board[a] == board[c])
+            {
+                return board[a]; // Returns "X" or "O"
+            }
+        }
+
+        foreach (string cell in board)
+        {
+            if (string.IsNullOrEmpty(cell)) return null; // Game still ongoing
+        }
+
+        return "Draw";
+    }
+
+    private bool CheckWinner()
+    {
+        string winner = CheckWinState();
+        if (winner == null) return false;
+
+        if (winner == "X" || winner == "O")
+        {
+            int[,] winPatterns = {
+                {0, 1, 2}, {3, 4, 5}, {6, 7, 8}, // Rows
+                {0, 3, 6}, {1, 4, 7}, {2, 5, 8}, // Columns
+                {0, 4, 8}, {2, 4, 6}            // Diagonals
+            };
+
+            for (int i = 0; i < winPatterns.GetLength(0); i++)
+            {
+                int a = winPatterns[i, 0], b = winPatterns[i, 1], c = winPatterns[i, 2];
+                if (board[a] == winner && board[b] == winner && board[c] == winner)
+                {
+                    HighlightWinningCells(a, b, c);
+                    break;
+                }
+            }
+
+            displayText.text = $"{winner} Wins!";
+            gameOver = true;
+            resetButton.gameObject.SetActive(true);
+            return true;
+        }
+        return false;
+    }
+
+    private bool IsDraw()
+    {
+        if (CheckWinState() == "Draw")
+        {
+            displayText.text = "It's a Draw!";
+            gameOver = true;
+            resetButton.gameObject.SetActive(true);
+            return true;
+        }
+        return false;
+    }
+
+    private void HighlightWinningCells(int a, int b, int c)
+    {
+        gridButtons[a].GetComponent<Image>().color = Color.green;
+        gridButtons[b].GetComponent<Image>().color = Color.green;
+        gridButtons[c].GetComponent<Image>().color = Color.green;
+    }
 }
