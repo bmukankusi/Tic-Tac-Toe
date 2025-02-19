@@ -7,6 +7,7 @@ public class TicTacToe : MonoBehaviour
     public Button[] gridButtons;
     public Text displayText;
     public Button resetButton;
+    public Button backToMenuButton;
 
     private string currentPlayer;
     private string[] board;
@@ -218,5 +219,11 @@ public class TicTacToe : MonoBehaviour
         gridButtons[a].GetComponent<Image>().color = Color.green;
         gridButtons[b].GetComponent<Image>().color = Color.green;
         gridButtons[c].GetComponent<Image>().color = Color.green;
+    }
+
+    //Back to menu scene
+    public void BackToMenu()
+    {
+        UnityEngine.SceneManagement.SceneManager.LoadScene("MenuScene");
     }
 }
