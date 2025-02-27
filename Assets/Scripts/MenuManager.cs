@@ -4,18 +4,18 @@ using UnityEngine.UI;
 
 public class MenuManager : MonoBehaviour
 {
-    public GameObject menuPanel;       // Main menu panel
-    public GameObject settingsPanel;   // Settings panel
-    public Slider volumeSlider;        // Volume control slider
-    public Toggle musicToggle;         // Toggle for music ON/OFF
-    public Dropdown resolutionDropdown;// Resolution dropdown
+    public GameObject menuPanel;       
+    public GameObject settingsPanel;   
+    public Slider volumeSlider;        
+    public Toggle musicToggle;         
+    public Dropdown resolutionDropdown;
 
     private AudioSource backgroundMusic;
     private Resolution[] resolutions;
 
     void Start()
     {
-        // Ensure settings panel is hidden initially
+        // This ensures settings panel is hidden initially
         settingsPanel.SetActive(false);
         menuPanel.SetActive(true);
 
@@ -27,7 +27,7 @@ public class MenuManager : MonoBehaviour
             volumeSlider.value = savedVolume;
         }
 
-        // Initialize music toggle
+        
         if (PlayerPrefs.HasKey("Music"))
         {
             bool isMusicOn = PlayerPrefs.GetInt("Music") == 1;
@@ -37,6 +37,8 @@ public class MenuManager : MonoBehaviour
         }
 
         // Populate resolution dropdown
+        // Get available resolutions, set current resolution, and add options to dropdown
+        // Save selected resolution in PlayerPrefs
         resolutions = Screen.resolutions;
         resolutionDropdown.ClearOptions();
         int currentResolutionIndex = 0;
@@ -55,6 +57,7 @@ public class MenuManager : MonoBehaviour
         resolutionDropdown.RefreshShownValue();
 
         // Add listeners
+        // SetVolume, SetMusic, and SetResolution are called when the respective UI elements change
         volumeSlider.onValueChanged.AddListener(SetVolume);
         musicToggle.onValueChanged.AddListener(SetMusic);
         resolutionDropdown.onValueChanged.AddListener(SetResolution);

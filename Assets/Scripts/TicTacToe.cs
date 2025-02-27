@@ -13,6 +13,9 @@ public class TicTacToe : MonoBehaviour
     private string[] board;
     private bool gameOver = false;
 
+    // Game board layout:
+    // Every cell is represented by an index from 0 to 8, as shown below:
+    // Resetbutton is used to reset the game
     void Start()
     {
         ResetBoard();
@@ -28,6 +31,8 @@ public class TicTacToe : MonoBehaviour
         resetButton.onClick.AddListener(ResetBoard);
     }
 
+    // Reset the game board using the reset button which sets the game to its initial state
+    // Every cell is set to empty
     public void ResetBoard()
     {
         gameOver = false;
@@ -46,6 +51,10 @@ public class TicTacToe : MonoBehaviour
         }
     }
 
+    // OnGridClick is called when a grid button is clicked
+    // It checks if the game is over or if the cell is already occupied
+    // If not, it sets the current player's symbol on the cell
+
     public void OnGridClick(int index)
     {
         if (gameOver || !string.IsNullOrEmpty(board[index])) return;
@@ -62,9 +71,11 @@ public class TicTacToe : MonoBehaviour
         currentPlayer = "O";
         displayText.text = "AI is Thinking...";
 
-        // Delay AI move for better UX
+        // Delay AI move  for one second
         Invoke("MakeAIMove", 1.0f);
     }
+
+    // MakeAIMove is called after a delay of one second
 
     private void MakeAIMove()
     {
@@ -94,7 +105,7 @@ public class TicTacToe : MonoBehaviour
             {
                 board[i] = "O";
                 int score = Minimax(board, 0, false);
-                board[i] = ""; // Undo move
+                board[i] = ""; 
 
                 if (score > bestScore)
                 {
@@ -106,6 +117,12 @@ public class TicTacToe : MonoBehaviour
 
         return move;
     }
+
+    /*Minimax algorithm with alpha-beta pruning: alpha-beta is a search algorithm that seeks to decrease the number of nodes
+    that are evaluated by the minimax algorithm in its search tree.It is an adversarial search algorithm used commonly for
+     machine playing of two-player games(Tic-Tac-Toe, Chess, Go, etc.). It stops evaluating a move when at least one possibility
+     has been found that proves the move to be worse than a previously examined move.Such moves need not be evaluated further.*/
+    // Returns the best score for the current player
 
     private int Minimax(string[] newBoard, int depth, bool isMaximizing)
     {
@@ -123,7 +140,7 @@ public class TicTacToe : MonoBehaviour
                 {
                     newBoard[i] = "O";
                     int score = Minimax(newBoard, depth + 1, false);
-                    newBoard[i] = ""; // Undo move
+                    newBoard[i] = ""; 
                     bestScore = Mathf.Max(score, bestScore);
                 }
             }
@@ -145,6 +162,9 @@ public class TicTacToe : MonoBehaviour
             return bestScore;
         }
     }
+
+    // CheckWinState checks if the game is over and returns the winner or draw
+    // It also highlights the winning cells, and displays the result on the screen
 
     private string CheckWinState()
     {
@@ -171,6 +191,9 @@ public class TicTacToe : MonoBehaviour
         return "Draw";
     }
 
+    // CheckWinner checks if the game is over and displays the result on the screen
+    // How it works: It checks if the game is over by calling CheckWinState
+    // ChechWinStates works in a way such the pattern of the winning cells is checked whether it is a row, column or diagonal; corresponding cells are highlighted
     private bool CheckWinner()
     {
         string winner = CheckWinState();
@@ -194,6 +217,8 @@ public class TicTacToe : MonoBehaviour
                 }
             }
 
+            // Display the winner
+
             displayText.text = $"{winner} Wins!";
             gameOver = true;
             resetButton.gameObject.SetActive(true);
@@ -213,6 +238,9 @@ public class TicTacToe : MonoBehaviour
         }
         return false;
     }
+
+    // HighlightWinningCells highlights the winning cells with green color
+    // It takes the indices of the winning cells as arguments, and sets their color to green
 
     private void HighlightWinningCells(int a, int b, int c)
     {
